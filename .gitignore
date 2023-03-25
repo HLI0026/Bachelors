@@ -1,0 +1,9 @@
+/.ipynb_checkpoints
+/.png
+/.vscode
+/__pycache__
+/clauses_large.txt
+/clauses_small.txt
+/graph_file_large.png
+/graph_file_small.png
+/one_grover.ipynb

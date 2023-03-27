@@ -201,4 +201,5 @@ def Grovers(path: str,my_shots:int):
     return counts
 
 def my_plot(counts:dict,f_name:str):
+    
     plot_histogram(counts,filename = f_name)

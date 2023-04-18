@@ -1,8 +1,7 @@
 import numpy as np
 from qiskit import Aer, assemble, transpile
-from qiskit import QuantumCircuit,  ClassicalRegister, QuantumRegister
+from qiskit import QuantumCircuit
 from qiskit.visualization import plot_histogram 
-import math
 
 class grovers_alg:
 
@@ -74,7 +73,7 @@ class grovers_alg:
 
         return amount
 
-    def Init(self): #snazil jsem se najit objekt Gate v qiskit library, abych to hodil do type hintu, ale nenašel jsem to, proto to tu chybí 
+    def Init(self):
         """
         Returns gate, which sets correct qubits into superposition and last qubits into |-> state
         """
@@ -126,8 +125,9 @@ class grovers_alg:
     
 
     def Diffuser(self):
+
         """
-        Diffuser amplifies probability of measuring marked items by oracle (or amplifies unmarked items - this depends on how many iterations of algorithm are done). Diffuser is built based on clauses.
+        Diffuser amplifies probability of measuring marked items by oracle (or amplifies unmarked items - this depends on how many iterations of algorithm are done)
         """
 
         qc = QuantumCircuit(self._amount[0])
@@ -156,21 +156,10 @@ class grovers_alg:
 
         return diffuser_gate
 
-    def Grovers(self) -> dict:
-        """
-        Runs grovers algorithm and returns counts of measured items
-        """
-
-        """
-        Algorithm:
-        1. Set correct qubits into superposition and last qubit into |-> state
-        2. Run oracle for set up oracle part of grovers algorithm
-        3. Run diffuser for set up diffuser part of grovers algorithm
-        4. Measure diffuser qubits
-        """
-
-
-        iterations = int( np.arcsin(1 / np.sqrt( self._amount[0] ) ) )
+    def Grovers(self):
+        
+        iterations = ( np.arcsin(1 / np.sqrt( self._amount[0] ) ) )
+        iterations = iterations.ceil()
         #sometimes number of iterations can be near 0, in this case we increase it to 1 to make algorithm work
 
         if iterations == 0: iterations = 1

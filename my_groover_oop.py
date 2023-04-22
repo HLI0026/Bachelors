@@ -7,18 +7,34 @@ import math
 class grovers_alg:
 
     def __init__(self, clauses_path:str, shots:int) -> None:
+        """
+        _shots: number of shots for simulation
+        _clauses_path: path to file with clauses
+        _clauses: list of clauses
+        _diffuser_qubits_count: number of qubits needed for diffuser
+        _clause_qubits_count: number of qubits needed for clause realization
+        _all_qubits_count: number of all qubits needed
+        
+        """
         self._shots = shots
         self._clauses_path = clauses_path
         self._clauses = self.FileRead()
         self.QubitsCounts()
 
     def CircuitSetup(self):
-
+        """
+        _init_gate: gate, which sets correct qubits into superposition and last qubits into |-> state
+        _oracle: gate, which marks correct item(s)
+        _diffuser: gate, which inverts amplitudes of marked items
+        """
         self._init_gate = self.Init()
         self._oracle = self.Oracle()
         self._diffuser = self.Diffuser()    
     
     def Compute(self):
+        """
+        _counts: counts of all outcomes measured by simulator with _shots shots
+        """
         self.CircuitSetup()
         self._counts = self.Grovers()
 

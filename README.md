@@ -16,6 +16,14 @@ TODO
 
 # VVP
 
+Verze použitých knihoven:
+
+qiskit                                    0.41.0
+qiskit-aer                                0.11.2
+qiskit-ibmq-provider                      0.20.0
+qiskit-terra                              0.23.1
+numpy                                     1.23.5
+
 V examples najdeme využití groverova algoritmu na jednoduchých sudoku. Podmínky těchto pseudosudoku generujeme ve stejném souboru.
 
 Více o groverově algoritmu se jde dočíst na:

@@ -10,12 +10,17 @@ class grovers_alg:
         self._shots = shots
         self._clauses_path = clauses_path
         self._clauses = self.FileRead()
-        self._amount = self.QubitsCounts()
+        self.QubitsCounts()
+
+    def CircuitSetup(self):
+
         self._init_gate = self.Init()
         self._oracle = self.Oracle()
-        self._diffuser = self.Diffuser()
+        self._diffuser = self.Diffuser()    
+    
+    def Compute(self):
+        self.CircuitSetup()
         self._counts = self.Grovers()
-
 
     def FileRead(self) -> list:
         """
@@ -47,9 +52,9 @@ class grovers_alg:
         return clauses
 
 
-    def QubitsCounts(self) -> list:
+    def QubitsCounts(self):
         """
-        Returns amount of qubits required for oracle and diffuser
+        Sets up amount of qubits required for oracle and diffuser
         amount[0] contains diffuser quibts, amount[1] contains additional qubits for clause realisation, amount[2] number of all qubits needed
         """
         amount = [0, 0, 0]
@@ -70,23 +75,27 @@ class grovers_alg:
 
         amount[1] = len(self._clauses)
 
-        amount[2] = qubits_init = amount[1]+amount[0]+1
+        amount[2] = amount[1]+amount[0]+1
 
-        return amount
+        self._diffuser_qubits_count= amount[0]
+        self._clause_qubits_count = amount[1]
+        self._all_qubits_count = amount[2]
 
     def Init(self): #snazil jsem se najit objekt Gate v qiskit library, abych to hodil do type hintu, ale nenašel jsem to, proto to tu chybí 
         """
         Returns gate, which sets correct qubits into superposition and last qubits into |-> state
         """
 
-        qc = QuantumCircuit(self._amount[2])
+        qc = QuantumCircuit(self._all_qubits_count)
 
-        for qubit in range(self._amount[0]):
+        for qubit in range(self._diffuser_qubits_count):
             
             qc.h(qubit)
     
-        qc.x(self._amount[2]-1)
-        qc.h(self._amount[2]-1)
+        qc.x(self._all_qubits_count-1)
+        qc.h(self._all_qubits_count-1)
+
+        self._init_gate_realization = qc
         
         init_gate = qc.to_gate()
 
@@ -102,21 +111,23 @@ class grovers_alg:
         """
 
 
-        qc = QuantumCircuit(self._amount[2])
+        qc = QuantumCircuit(self._all_qubits_count)
 
         for idx, clause in enumerate(self._clauses):
 
-            qc.cx(clause[0], idx + self._amount[1])
+            qc.cx(clause[0], idx + self._clause_qubits_count)
 
-            qc.cx(clause[1], idx + self._amount[1])
+            qc.cx(clause[1], idx + self._clause_qubits_count)
         
-        qc.mct(list(range(self._amount[0],self._amount[2]-1)), self._amount[2]-1)
+        qc.mct(list(range(self._diffuser_qubits_count, self._all_qubits_count-1)), self._all_qubits_count-1)
         
         for idx, clause in enumerate(self._clauses):
 
-            qc.cx(clause[0], idx + self._amount[1])
+            qc.cx(clause[0], idx + self._clause_qubits_count)
 
-            qc.cx(clause[1], idx + self._amount[1])
+            qc.cx(clause[1], idx + self._clause_qubits_count)
+
+        self._oracle_gate_realization = qc    
 
         oracle_gate = qc.to_gate()
 
@@ -130,25 +141,27 @@ class grovers_alg:
         Diffuser amplifies probability of measuring marked items by oracle (or amplifies unmarked items - this depends on how many iterations of algorithm are done). Diffuser is built based on clauses.
         """
 
-        qc = QuantumCircuit(self._amount[0])
+        qc = QuantumCircuit(self._diffuser_qubits_count)
 
-        for i in range(self._amount[0]-1):
+        for i in range(self._diffuser_qubits_count-1):
 
             qc.h(i)
             qc.x(i)
 
         #qc.barrier(list(range(amount[0])))
 
-        qc.z(self._amount[0]-1)
-        qc.mct(list(range(self._amount[0]-1)), self._amount[0]-1)
-        qc.z(self._amount[0]-1)
+        qc.z(self._diffuser_qubits_count-1)
+        qc.mct(list(range(self._diffuser_qubits_count-1)), self._diffuser_qubits_count-1)
+        qc.z(self._diffuser_qubits_count-1)
 
         #qc.barrier(list(range(amount[0])))
 
-        for i in range(self._amount[0]-1):
+        for i in range(self._diffuser_qubits_count-1):
 
             qc.x(i)
             qc.h(i)
+
+        self._diffuser_gate_realization = qc
 
         diffuser_gate = qc.to_gate()
 
@@ -170,18 +183,18 @@ class grovers_alg:
         """
 
 
-        iterations = int( np.arcsin(1 / np.sqrt( self._amount[0] ) ) )
+        iterations = int( np.arcsin(1 / np.sqrt( self._diffuser_qubits_count ) ) )
         #sometimes number of iterations can be near 0, in this case we increase it to 1 to make algorithm work
 
         if iterations == 0: iterations = 1
         
-        init_qubits = list(range(self._amount[2]))
+        init_qubits = list(range(self._all_qubits_count))
         
-        oracle_qubits = list(range(self._amount[2]))
+        oracle_qubits = list(range(self._all_qubits_count))
         
-        diffuser_qubits = list(range(self._amount[0]))
+        diffuser_qubits = list(range(self._diffuser_qubits_count))
 
-        qc = QuantumCircuit(self._amount[2],self._amount[0])
+        qc = QuantumCircuit(self._all_qubits_count,self._diffuser_qubits_count)
         
         qc.append(self._init_gate,init_qubits)
 

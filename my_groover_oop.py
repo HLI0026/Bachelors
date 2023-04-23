@@ -4,7 +4,7 @@ from qiskit import QuantumCircuit,  ClassicalRegister, QuantumRegister
 from qiskit.visualization import plot_histogram 
 import math
 
-class grovers_alg:
+class GroversAlgorithm:
 
     def __init__(self, clauses_path:str, shots:int) -> None:
         """
@@ -18,27 +18,31 @@ class grovers_alg:
         """
         self._shots = shots
         self._clauses_path = clauses_path
-        self._clauses = self.FileRead()
-        self.QubitsCounts()
+        self._clauses = self.file_read()
+        self.qubits_counts()
 
-    def CircuitSetup(self):
+    def circuit_setup(self):
         """
         _init_gate: gate, which sets correct qubits into superposition and last qubits into |-> state
         _oracle: gate, which marks correct item(s)
         _diffuser: gate, which inverts amplitudes of marked items
         """
-        self._init_gate = self.Init()
-        self._oracle = self.Oracle()
-        self._diffuser = self.Diffuser()    
-    
-    def Compute(self):
-        """
-        _counts: counts of all outcomes measured by simulator with _shots shots
-        """
-        self.CircuitSetup()
-        self._counts = self.Grovers()
 
-    def FileRead(self) -> list:
+        
+        self._init_gate_realization = self.init()
+        self._init_gate = self._init_gate_realization.to_gate()
+        self._init_gate.name = "init"
+
+        self._oracle_gate_realization = self.oracle()
+        self._oracle_gate = self._oracle_gate_realization.to_gate()
+        self._oracle_gate.name = "oracle"
+
+        self._diffuser_gate_realization = self.diffuser()
+        self._diffuser_gate = self._diffuser_gate_realization.to_gate()
+        self._diffuser_gate.name = "diffuser"
+        
+    
+    def file_read(self) -> list:
         """
         Reading file, transfering from string to list of lists, which contain single clauses
         """
@@ -68,36 +72,36 @@ class grovers_alg:
         return clauses
 
 
-    def QubitsCounts(self):
+    def qubits_counts(self):
         """
-        Sets up amount of qubits required for oracle and diffuser
-        amount[0] contains diffuser quibts, amount[1] contains additional qubits for clause realisation, amount[2] number of all qubits needed
+        Sets up amount of qubits required for oracle and diffuser into self._diffuser_qubits_count and self._clause_qubits_count respectively
+        Also sets up amount of all qubits into self._all_qubits_count
         """
-        amount = [0, 0, 0]
+
+        self._diffuser_qubits_count = 0
+        self._clause_qubits_count = 0
+        self._all_qubits_count = 0
         
         for cl1, cl2 in self._clauses:
             
-            if amount[0]<cl1:
+            if self._diffuser_qubits_count<cl1:
                 
-                amount[0] = cl1
+                self._diffuser_qubits_count = cl1
             
-            if amount[0]<cl2:
+            if self._diffuser_qubits_count<cl2:
             
-                amount[0] = cl2
+                self._diffuser_qubits_count = cl2
         
         #due to 0 indexing of python we need to add 1 to diffuser qubits
 
-        amount[0] +=1
+        self._diffuser_qubits_count +=1
 
-        amount[1] = len(self._clauses)
+        self._clause_qubits_count = len(self._clauses)
 
-        amount[2] = amount[1]+amount[0]+1
+        self._all_qubits_count  = self._clause_qubits_count+self._diffuser_qubits_count+1
 
-        self._diffuser_qubits_count= amount[0]
-        self._clause_qubits_count = amount[1]
-        self._all_qubits_count = amount[2]
 
-    def Init(self): #snazil jsem se najit objekt Gate v qiskit library, abych to hodil do type hintu, ale nenašel jsem to, proto to tu chybí 
+    def init(self): #snazil jsem se najit objekt Gate v qiskit library, abych to hodil do type hintu, ale nenašel jsem to, proto to tu chybí 
         """
         Returns gate, which sets correct qubits into superposition and last qubits into |-> state
         """
@@ -110,16 +114,10 @@ class grovers_alg:
     
         qc.x(self._all_qubits_count-1)
         qc.h(self._all_qubits_count-1)
-
-        self._init_gate_realization = qc
         
-        init_gate = qc.to_gate()
+        return qc
 
-        init_gate.name = "init"
-        
-        return init_gate
-
-    def Oracle(self):
+    def oracle(self):
         
         """
         Makes oracle of grovers algorithm from clauses and respective amount of neccesary qubits
@@ -143,16 +141,10 @@ class grovers_alg:
 
             qc.cx(clause[1], idx + self._clause_qubits_count)
 
-        self._oracle_gate_realization = qc    
-
-        oracle_gate = qc.to_gate()
-
-        oracle_gate.name = "oracle"
-        
-        return oracle_gate
+        return qc
     
 
-    def Diffuser(self):
+    def diffuser(self):
         """
         Diffuser amplifies probability of measuring marked items by oracle (or amplifies unmarked items - this depends on how many iterations of algorithm are done). Diffuser is built based on clauses.
         """
@@ -177,15 +169,9 @@ class grovers_alg:
             qc.x(i)
             qc.h(i)
 
-        self._diffuser_gate_realization = qc
+        return qc
 
-        diffuser_gate = qc.to_gate()
-
-        diffuser_gate.name = "diffuser"
-
-        return diffuser_gate
-
-    def Grovers(self) -> dict:
+    def grovers(self) -> dict:
         """
         Runs grovers algorithm and returns counts of measured items
         """
@@ -216,9 +202,9 @@ class grovers_alg:
 
         for i in range(iterations):
                 
-            qc.append(self._oracle,oracle_qubits)
+            qc.append(self._oracle_gate,oracle_qubits)
             
-            qc.append(self._diffuser, diffuser_qubits)
+            qc.append(self._diffuser_gate, diffuser_qubits)
         
     
         qc.measure(diffuser_qubits,diffuser_qubits)
@@ -231,10 +217,12 @@ class grovers_alg:
         
         results = aer_sim.run(assembled).result()
         
-        counts = results.get_counts()
+        self._counts = results.get_counts()
 
-        return counts
 
-    def my_plot(self,f_name:str):
+    def my_plot(self, path:str = None):
         
-        plot_histogram(self._counts,filename = f_name)
+        if path:
+            plot_histogram(self._counts, filename =path)
+        else:
+            return plot_histogram(self._counts)

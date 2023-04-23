@@ -101,7 +101,7 @@ class GroversAlgorithm:
         self._all_qubits_count  = self._clause_qubits_count+self._diffuser_qubits_count+1
 
 
-    def init(self): #snazil jsem se najit objekt Gate v qiskit library, abych to hodil do type hintu, ale nenašel jsem to, proto to tu chybí 
+    def init(self) ->QuantumCircuit: 
         """
         Returns gate, which sets correct qubits into superposition and last qubits into |-> state
         """
@@ -117,7 +117,7 @@ class GroversAlgorithm:
         
         return qc
 
-    def oracle(self):
+    def oracle(self) -> QuantumCircuit:
         
         """
         Makes oracle of grovers algorithm from clauses and respective amount of neccesary qubits
@@ -144,7 +144,7 @@ class GroversAlgorithm:
         return qc
     
 
-    def diffuser(self):
+    def diffuser(self)-> QuantumCircuit:
         """
         Diffuser amplifies probability of measuring marked items by oracle (or amplifies unmarked items - this depends on how many iterations of algorithm are done). Diffuser is built based on clauses.
         """

@@ -226,3 +226,4 @@ class GroversAlgorithm:
             plot_histogram(self._counts, filename =path)
         else:
             return plot_histogram(self._counts)
+        

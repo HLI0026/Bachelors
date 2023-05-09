@@ -5,7 +5,6 @@ from qiskit.visualization import plot_histogram
 import math
 from typing import Union
 
-
 class GroversAlgorithm:
 
     def __init__(self, clauses_path:str, shots:int) -> None:

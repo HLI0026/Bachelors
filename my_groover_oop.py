@@ -22,7 +22,7 @@ class GroversAlgorithm:
         self._clauses = self.file_read()
         self.qubits_counts()
 
-    def circuit_setup(self):
+    def circuit_setup(self) ->None:
         """
         _init_gate: gate, which sets correct qubits into superposition and last qubits into |-> state
         _oracle: gate, which marks correct item(s)
@@ -74,7 +74,7 @@ class GroversAlgorithm:
         return clauses_int
 
 
-    def qubits_counts(self):
+    def qubits_counts(self) -> None:
         """
         Sets up amount of qubits required for oracle and diffuser into self._diffuser_qubits_count and self._clause_qubits_count respectively
         Also sets up amount of all qubits into self._all_qubits_count

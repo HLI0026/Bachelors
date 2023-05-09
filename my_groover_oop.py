@@ -3,6 +3,8 @@ from qiskit import Aer, assemble, transpile
 from qiskit import QuantumCircuit,  ClassicalRegister, QuantumRegister
 from qiskit.visualization import plot_histogram 
 import math
+from typing import Union
+
 
 class GroversAlgorithm:
 
@@ -60,16 +62,17 @@ class GroversAlgorithm:
 
         #From string to list
         
+        clauses_int=[]
+
         for idx, clause in enumerate(clauses):
             
-            clauses[idx] = clause.split(",")
+            cls = clause.split(",")
             
-            clauses[idx][0] = int(clauses[idx][0])
-            clauses[idx][1] = int(clauses[idx][1])
+            clauses_int.append([int(cls[0]) , int(cls[1])])
 
         my_file.close()
 
-        return clauses
+        return clauses_int
 
 
     def qubits_counts(self):
@@ -171,7 +174,7 @@ class GroversAlgorithm:
 
         return qc
 
-    def grovers(self) -> dict:
+    def grovers(self) -> None:
         """
         Runs grovers algorithm and returns counts of measured items
         """
@@ -220,7 +223,7 @@ class GroversAlgorithm:
         self._counts = results.get_counts()
 
 
-    def my_plot(self, path:str = None):
+    def my_plot(self, path:( str | None) = None):
         
         if path:
             plot_histogram(self._counts, filename =path)
